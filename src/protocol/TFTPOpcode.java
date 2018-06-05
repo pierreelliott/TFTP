@@ -12,6 +12,15 @@ public enum TFTPOpcode {
     private TFTPOpcode(String value) {
         this.value = value;
     }
+    public int toInt() {
+        switch (value) {
+            case "Read": return 1;
+            case "Write": return 2;
+            case "Data": return 3;
+            case "Ack": return 4;
+            case "Error": default: return 5;
+        }
+    }
 
     public static TFTPOpcode getEnum(byte[] code){
         if(code[0] == 0 ) {
