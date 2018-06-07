@@ -2,6 +2,8 @@ package protocol;
 
 import java.io.ByteArrayOutputStream;
 import java.io.UnsupportedEncodingException;
+import java.nio.ByteBuffer;
+import java.util.Arrays;
 
 public class TFTP {
 
@@ -44,8 +46,18 @@ public class TFTP {
     public short getNumBloc() {
         return numBloc;
     }
+    public byte[] getNumBlocBytes() {
+        ByteBuffer dbuf = ByteBuffer.allocate(2);
+        dbuf.putShort(this.numBloc);
+        return dbuf.array();
+    }
     public void setNumBloc(short numBloc) {
         this.numBloc = numBloc;
+    }
+    public void setNumBloc(byte[] tab) {
+        if(tab.length != 2) return;
+        ByteBuffer wrapped = ByteBuffer.wrap(tab);
+        this.numBloc = wrapped.getShort();
     }
     public byte[] getData() {
         return data;
@@ -55,6 +67,11 @@ public class TFTP {
     }
     public short getErrorCode() {
         return errorCode;
+    }
+    public byte[] getErrorCodeBytes() {
+        ByteBuffer dbuf = ByteBuffer.allocate(2);
+        dbuf.putShort(this.errorCode);
+        return dbuf.array();
     }
     public void setErrorCode(short errorCode) {
         this.errorCode = errorCode;
@@ -106,7 +123,7 @@ public class TFTP {
         byte[] opcode = {0, 3};
         ByteArrayOutputStream outputStream = new ByteArrayOutputStream( );
         outputStream.write( opcode );
-        outputStream.write( this.numBloc );
+        outputStream.write( this.getNumBlocBytes() );
         outputStream.write( this.data );
 
         return outputStream.toByteArray( );
@@ -116,7 +133,7 @@ public class TFTP {
         byte[] opcode = {0, 4};
         ByteArrayOutputStream outputStream = new ByteArrayOutputStream( );
         outputStream.write( opcode );
-        outputStream.write( this.numBloc );
+        outputStream.write( this.getNumBlocBytes() );
 
         return outputStream.toByteArray( );
     }
@@ -125,7 +142,7 @@ public class TFTP {
         byte[] opcode = {0, 5};
         ByteArrayOutputStream outputStream = new ByteArrayOutputStream( );
         outputStream.write( opcode );
-        outputStream.write( this.errorCode );
+        outputStream.write( this.getErrorCodeBytes() );
         outputStream.write( this.errorMsg.getBytes("UTF-8") );
         outputStream.write( (byte)0 );
 
@@ -142,29 +159,70 @@ public class TFTP {
         return msg.toByte();
     }
 
-    public static byte[] createWritePaquet() throws Exception {
-        // TODO
-        return new byte[0];
+    public static byte[] createWritePaquet(String title) throws Exception {
+        TFTP msg = new TFTP();
+        msg.setOpcode(2);
+        msg.setFileTitle(title);
+//        msg.setMode("octet");
+        return msg.toByte();
     }
 
-    public static byte[] createDataPaquet() throws Exception {
-        // TODO
-        // Vérifier que le tableau de byte passé en paramètre n'est pas supérieur à 512 octets
-        // Vérifier également que le numéro de bloc est supérieur à 0 (gaffe, c'est un 'short')
-        return new byte[0];
+    public static byte[] createDataPaquet(byte[] data, short numBloc) throws Exception {
+        if (data.length > 512)
+            System.out.println("Erreur lors de la création du datapacket : " + "taille des données = " + data.length + " > 512 o");
+        else if (numBloc <= 0)
+            System.out.println("Erreur lors de la création du datapacket : " + "numéro de bloc = " + numBloc + " < 1");
+        else {
+            TFTP msg = new TFTP();
+            msg.setOpcode(3);
+            msg.setData(data);
+            msg.setNumBloc(numBloc);
+            return msg.toByte();
+        }
+        return null;
     }
 
-    public static byte[] createAckPaquet() throws Exception {
-        // TODO
-        return new byte[0];
+    public static byte[] createAckPaquet(short numBloc) throws Exception {
+        if (numBloc <= 0)
+            System.out.println("Erreur lors de la création du ackpackect : " + "numéro de bloc = " + numBloc + " < 1");
+        else {
+            TFTP msg = new TFTP();
+            msg.setOpcode(4);
+            msg.setNumBloc(numBloc);
+            return msg.toByte();
+        }
+        return null;
     }
 
-    public static byte[] createErrorPaquet() throws Exception {
-        // TODO
-        return new byte[0];
+    public static byte[] createErrorPaquet(short errorCode) throws Exception {
+        String errorMsg;
+        switch (errorCode) {
+            case 0 :  errorMsg = "Not defined, see error message (if any)."; break;
+            case 1 :  errorMsg = "File not found."; break;
+            case 2 :  errorMsg = "Access violation."; break;
+            case 3 :  errorMsg = "Disk full or allocation exceeded."; break;
+            case 4 :  errorMsg = "Illegal TFTP operation."; break;
+            case 5 :  errorMsg = "Unknown transfer ID."; break;
+            case 6 :  errorMsg = "File already exists."; break;
+            case 7 :  errorMsg = "No such user."; break;
+            default :
+                System.out.println("Erreur lors de la création du errorpackect : " + "code d'erreur inconnu = " + errorCode);
+                return null;
+        }
+        TFTP msg = new TFTP();
+        msg.setOpcode(4);
+        msg.setErrorCode(errorCode);
+        msg.setErrorMsg(errorMsg);
+        return msg.toByte();
     }
 
-    public static TFTP readBytes(byte[] bytes) {
+    public static TFTP readBytes(byte[] bytes) throws Exception {
+        System.out.println("Bytes :");
+        for(int i = 0; i < bytes.length; i++) {
+            System.out.println(bytes[i]);
+        }
+        System.out.println("=================================");
+
         TFTP protoc = new TFTP();
         protoc.setOpcode((int)bytes[1]);
         switch (protoc.getOpcode()) { // FIXME (à finir)
@@ -173,10 +231,15 @@ public class TFTP {
             case WRITE:
                 break;
             case DATA:
+                protoc.setNumBloc((short) ((short)bytes[2] + (short)bytes[3]));
+                protoc.setData(Arrays.copyOfRange(bytes, 4, bytes.length));
                 break;
             case ACK:
+                protoc.setNumBloc((short) ((short)bytes[2] + (short)bytes[3]));
                 break;
             case ERROR: default:
+                protoc.setErrorCode((short) ((short)bytes[2] + (short)bytes[3]));
+                protoc.setErrorMsg(new String(Arrays.copyOfRange(bytes, 4, bytes.length-1), "UTF-8"));
                 break;
         }
         return protoc;

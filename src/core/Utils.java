@@ -7,6 +7,8 @@ import java.util.List;
 
 public abstract class Utils extends CommInterface implements Runnable {
 
+    private boolean finished = false;
+
     public Utils(DatagramSocket o) throws Exception {
         super(o);
     }
@@ -25,7 +27,7 @@ public abstract class Utils extends CommInterface implements Runnable {
     public void run() {
         try {
             init();
-            while(true) {
+            while(!finished) {
                 preprocess();
                 process();
                 postprocess();
@@ -34,6 +36,8 @@ public abstract class Utils extends CommInterface implements Runnable {
             e.printStackTrace();
         }
     }
+
+    public void setFinished() { finished = true; }
 
     /* ================== STATIC ======================== */
 

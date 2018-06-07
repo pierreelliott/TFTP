@@ -1,6 +1,7 @@
 package core;
 
 import java.io.IOException;
+import java.io.UnsupportedEncodingException;
 import java.net.*;
 
 public abstract class CommInterface {
@@ -29,8 +30,8 @@ public abstract class CommInterface {
         }
     }
 
-    public boolean envoyer(String data, InetAddress ip, int port) {
-        DatagramPacket dp = new DatagramPacket(data.getBytes(), data.length(), ip, port);
+    public boolean envoyer(byte[] data, InetAddress ip, int port) {
+        DatagramPacket dp = new DatagramPacket(data, data.length, ip, port);
         try {
             socket.send(dp);
         } catch (IOException e) {
@@ -40,7 +41,16 @@ public abstract class CommInterface {
         return true;
     }
 
-    public boolean envoyer(String data, String ip, int port) {
+    public boolean envoyer(String data, InetAddress ip, int port) {
+        try {
+            return envoyer(data.getBytes("UTF-8"), ip, port);
+        } catch (UnsupportedEncodingException e) {
+            e.printStackTrace();
+            return false;
+        }
+    }
+
+    public boolean envoyer(byte[] data, String ip, int port) {
         InetAddress ad = null;
         try {
             ad = InetAddress.getByName(ip);
@@ -51,10 +61,10 @@ public abstract class CommInterface {
         return envoyer(data, ad, port);
     }
 
-    public boolean envoyer(String data, byte[] ip, int port) {
+    public boolean envoyer(String data, String ip, int port) {
         InetAddress ad = null;
         try {
-            ad = InetAddress.getByAddress(ip);
+            ad = InetAddress.getByName(ip);
         } catch (UnknownHostException e) {
             System.err.println("Erreur résolution adresse IP");
             return false;
