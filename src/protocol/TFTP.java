@@ -79,7 +79,7 @@ public class TFTP {
     public void setErrorCode(byte[] tab) {
         if(tab.length != 2) return;
         ByteBuffer wrapped = ByteBuffer.wrap(tab);
-        this.numBloc = wrapped.getShort();
+        this.errorCode = wrapped.getShort();
     }
     public String getErrorMsg() {
         return errorMsg;
@@ -199,9 +199,12 @@ public class TFTP {
         return null;
     }
 
-    public static byte[] createErrorPaquet(short errorCode) throws Exception {
-        String errorMsg;
+    public static String getMessageForCode(int errorCode) {
+        String errorMsg = "";
         switch (errorCode) {
+            case -2: errorMsg = "Problème d'accès au fichier local"; break;
+            case -1 : errorMsg = "Erreur inconnue côté client"; break;
+                // Erreurs TFTP "normales" en dessous
             case 0 :  errorMsg = "Not defined, see error message (if any)."; break;
             case 1 :  errorMsg = "File not found."; break;
             case 2 :  errorMsg = "Access violation."; break;
@@ -211,9 +214,14 @@ public class TFTP {
             case 6 :  errorMsg = "File already exists."; break;
             case 7 :  errorMsg = "No such user."; break;
             default :
-                System.out.println("Erreur lors de la création du errorpackect : " + "code d'erreur inconnu = " + errorCode);
+                errorMsg = "Code d'erreur inconnu = " + errorCode;
                 return null;
         }
+        return errorMsg;
+    }
+
+    public static byte[] createErrorPaquet(short errorCode) throws Exception {
+        String errorMsg = getMessageForCode(errorCode);
         TFTP msg = new TFTP();
         msg.setOpcode(4);
         msg.setErrorCode(errorCode);

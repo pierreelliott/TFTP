@@ -124,7 +124,7 @@ public class Client extends Utils implements Runnable {
                 hasMore = (length == 516);
                 lastBloc = response.getNumBloc();
                 if(lastBloc < 0) {
-                    throw new Error("Unknown transfer ID.", 5+1);
+                    throw new Error("Unknown transfer ID.", 5);
                 }
 
                 tab = TFTP.createAckPaquet(response.getNumBloc());
@@ -142,8 +142,7 @@ public class Client extends Utils implements Runnable {
                 break;
             case ERROR:
 //                System.out.println("Erreur (code "+ response.getErrorCode() +") : " + response.getErrorMsg());
-                throw new Error(response.getErrorMsg(), response.getErrorCode()+1);
-                // Le +1 pour le code d'erreur permet de gérer toutes les erreurs de base de TFTP
+                throw new Error(response.getErrorMsg(), response.getErrorCode());
         }
     }
 
@@ -181,7 +180,13 @@ public class Client extends Utils implements Runnable {
     }
 
     public static void main(String[] args) {
-        int ret = receiveFile("image.jpg","img7.jpg", "127.0.0.1");
+        String ad = "134.214.117.185";
+        int ret = receiveFile("image.jpg","img7.jpg", ad);
         System.out.println(ret);
+        if( ret == 0) {
+            System.out.println("La récupération du fichier s'est déroulée sans encombres.");
+        } else {
+            System.out.println(TFTP.getMessageForCode(ret));
+        }
     }
 }
