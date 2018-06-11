@@ -1,5 +1,7 @@
 package core;
 
+import protocol.Error;
+
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.net.*;
@@ -72,7 +74,7 @@ public abstract class CommInterface {
         return envoyer(data, ad, port);
     }
 
-    public void init() {}
+    public void init() throws Error {}
 
     public void preprocess() {}
 
