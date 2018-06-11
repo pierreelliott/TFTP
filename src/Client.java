@@ -14,12 +14,13 @@ public class Client extends Utils implements Runnable {
     private String SERV_IP = STATIC_SERV_IP;
     private int SERV_PORT = STATIC_SERV_PORT;
 
-    private boolean hasMore = false;
+    private boolean hasMore = true;
     private short lastBloc = -1;
     private byte[] lastData;
     private FileInputStream fileIn;
     private FileOutputStream fileOut;
-    private String filePath = "index2.html";
+    private String filePath = "img7.jpg";
+//    private String filePath = "index.html";
 
     public Client() throws Exception {
         super(new DatagramSocket());
@@ -44,25 +45,29 @@ public class Client extends Utils implements Runnable {
         byte[] buf = new byte[length];
         DatagramPacket p = new DatagramPacket(buf, length);
         try {
-            getSocket().receive(p);
-            // TODO Il faudrait ajouter une tempo
-            if(p.getPort() != SERV_PORT) {
-                SERV_PORT = p.getPort();
+            while(hasMore) {
+                getSocket().receive(p);
+                // TODO Il faudrait ajouter une tempo
+                if(p.getPort() != SERV_PORT) {
+                    SERV_PORT = p.getPort();
+                }
+                traiterReponse(p);
             }
-            traiterReponse(p);
         } catch (IOException e) {
             e.printStackTrace();
         }
         setFinished();
     }
 
-    public void write(byte[] data, int length) {
+    public void write(String file, byte[] data, int length) {
         try{
-            fileOut = new FileOutputStream ("d:\\temp\\fic1");
-
-            fileOut.write(data,lastBloc * 512, length);
-
-            fileOut.close();
+            if(fileOut == null) {
+                fileOut = new FileOutputStream (file);
+            }
+            fileOut.write(data,0, length);
+            if(length != 512) {
+                fileOut.close();
+            }
         } catch(IOException ex) {
             System.out.println(ex);
         }
@@ -106,10 +111,15 @@ public class Client extends Utils implements Runnable {
                     // TODO Il faut écrire le résultat dans le fichier
                     // Si le lastBloc est identique à response.getNumBloc() => on ne réécrit pas dans le fichier
                     if(lastBloc != response.getNumBloc()) {
-                        // Ecrire dans le fichier
+                        if(lastBloc == -1) lastBloc = 0;
+                        tab = response.getData();
+                        write(filePath, tab, length - 4);
                     }
                     hasMore = (length == 516);
                     lastBloc = response.getNumBloc();
+                    if(lastBloc < 0) {
+                        System.out.println("Aïe");
+                    }
 
                     tab = TFTP.createAckPaquet(response.getNumBloc());
                     envoyer(tab, SERV_IP, SERV_PORT);
@@ -131,23 +141,6 @@ public class Client extends Utils implements Runnable {
         } catch (Exception e) {
             e.printStackTrace();
         }
-
-        try {
-            System.out.println("Réponse : " + new String(data, "UTF-8"));
-        } catch (UnsupportedEncodingException e) {
-            e.printStackTrace();
-        }
-//        DialogProtocol message = new DialogProtocol(p);
-//        if(message.isChangingPort()) {
-//            System.out.println("Connecté au serveur");
-//            SERV_PORT = p.getPort();
-//        } else if(message.isAck()) {
-//            System.out.println("Message reçu par le serveur");
-//        } else if(message.isPong()) {
-//            System.out.println("Pong !");
-//        } else if(message.isBroadcast()) {
-//            System.out.println("Broadcasted : " + message.getContent());
-//        }
     }
 
     public String input() {
@@ -175,12 +168,6 @@ public class Client extends Utils implements Runnable {
     public static void main(String[] args) {
         try {
             Client client = new Client();
-//            boolean env = client.envoyer(DialogProtocol.requestConnection(client),
-//                    STATIC_SERV_IP, STATIC_SERV_PORT);
-//            if(env)
-//                System.out.println("Connexion demandée");
-//            else
-//                System.out.println("Erreur connexion");
 
             (new Thread(client)).start();
         } catch (Exception e) {

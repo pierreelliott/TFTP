@@ -76,6 +76,11 @@ public class TFTP {
     public void setErrorCode(short errorCode) {
         this.errorCode = errorCode;
     }
+    public void setErrorCode(byte[] tab) {
+        if(tab.length != 2) return;
+        ByteBuffer wrapped = ByteBuffer.wrap(tab);
+        this.numBloc = wrapped.getShort();
+    }
     public String getErrorMsg() {
         return errorMsg;
     }
@@ -217,11 +222,11 @@ public class TFTP {
     }
 
     public static TFTP readBytes(byte[] bytes) throws Exception {
-        System.out.println("Bytes :");
-        for(int i = 0; i < bytes.length; i++) {
-            System.out.println(bytes[i]);
-        }
-        System.out.println("=================================");
+//        System.out.println("Bytes :");
+//        for(int i = 0; i < bytes.length; i++) {
+//            System.out.println(bytes[i]);
+//        }
+//        System.out.println("=================================");
 
         TFTP protoc = new TFTP();
         protoc.setOpcode((int)bytes[1]);
@@ -231,14 +236,17 @@ public class TFTP {
             case WRITE:
                 break;
             case DATA:
-                protoc.setNumBloc((short) ((short)bytes[2] + (short)bytes[3]));
-                protoc.setData(Arrays.copyOfRange(bytes, 4, bytes.length));
+                byte[] nbloc1 = { bytes[2], bytes[3] };
+                protoc.setNumBloc(nbloc1); // La conversion est fausse
+                protoc.setData(Arrays.copyOfRange(bytes, 4, 516));
                 break;
             case ACK:
-                protoc.setNumBloc((short) ((short)bytes[2] + (short)bytes[3]));
+                byte[] nbloc2 = { bytes[2], bytes[3] };
+                protoc.setNumBloc(nbloc2);
                 break;
             case ERROR: default:
-                protoc.setErrorCode((short) ((short)bytes[2] + (short)bytes[3]));
+                byte[] nbloc3 = { bytes[2], bytes[3] };
+                protoc.setErrorCode(nbloc3);
                 protoc.setErrorMsg(new String(Arrays.copyOfRange(bytes, 4, bytes.length-1), "UTF-8"));
                 break;
         }
