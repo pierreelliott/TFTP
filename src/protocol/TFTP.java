@@ -217,7 +217,7 @@ public class TFTP {
                 errorMsg = "Code d'erreur inconnu = " + errorCode;
                 return null;
         }
-        return errorMsg;
+        return errorMsg + "(Code " + errorCode + ")";
     }
 
     public static byte[] createErrorPaquet(short errorCode) throws Exception {

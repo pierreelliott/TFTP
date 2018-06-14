@@ -146,18 +146,25 @@ public class Client extends Utils implements Runnable {
         }
     }
 
-    public String input() {
+    public static String input() {
+        int res;
         while(true) {
+            System.out.println("=========================================================");
+            System.out.println("Entrer commande sous la forme : commande localFile distantFile ip_serveur");
+            System.out.println("Avec commande = (get|receive)");
             Scanner scan = new Scanner(System.in);
             String text = scan.nextLine();
             if(!text.equalsIgnoreCase("")) {
-                if(this.envoyer(
-                        (ConsoleProtocol.getProtocoleMessage(text)).toString(),
-                        SERV_IP, SERV_PORT))
-                {
-                    System.out.println("Message envoyé");
+                String[] tab = text.split(" ");
+                if(tab[0].matches("(get|receive)")) {
+                    res = receiveFile(tab[1], tab[2], tab[3]);
+                    if( res == 0) {
+                        System.out.println("La récupération du fichier s'est déroulée sans encombres (Code " + res + ")");
+                    } else {
+                        System.out.println(TFTP.getMessageForCode(res));
+                    }
                 } else {
-                    System.out.println("Erreur envoi");
+                    System.out.println("Commande non reconnue");
                 }
             }
         }
@@ -180,13 +187,17 @@ public class Client extends Utils implements Runnable {
     }
 
     public static void main(String[] args) {
-        String ad = "134.214.117.185";
-        int ret = receiveFile("image.jpg","img7.jpg", ad);
-        System.out.println(ret);
-        if( ret == 0) {
-            System.out.println("La récupération du fichier s'est déroulée sans encombres.");
-        } else {
-            System.out.println(TFTP.getMessageForCode(ret));
-        }
+//        String ad = "134.214.117.162";
+//        int ret = receiveFile("image.jpg","img7.jpg", ad);
+//        System.out.println(ret);
+//        if( ret == 0) {
+//            System.out.println("La récupération du fichier s'est déroulée sans encombres.");
+//        } else {
+//            System.out.println(TFTP.getMessageForCode(ret));
+//        }
+
+        (new Thread(() -> {
+            input();
+        })).start();
     }
 }
