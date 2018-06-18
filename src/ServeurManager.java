@@ -1,5 +1,5 @@
 import core.Utils;
-import protocol.DialogProtocol;
+
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
 import java.net.InetAddress;
@@ -44,11 +44,11 @@ public class ServeurManager extends Utils implements Runnable {
         String msg = (new String(p.getData())).trim();
         System.out.println("(Serveur) Message reçu : '" + msg + "'");
         System.out.println("IP : " + p.getAddress().getHostAddress());
-        DialogProtocol message = new DialogProtocol(p);
-        if(message.isAskingConnection()) {
-            System.out.println("Client connecté");
-            establishConnection(p);
-        }
+//        DialogProtocol message = new DialogProtocol(p);
+//        if(message.isAskingConnection()) {
+//            System.out.println("Client connecté");
+//            establishConnection(p);
+//        }
     }
 
     public void broadcast(String message, Serveur sender) {

@@ -1,5 +1,4 @@
 import core.Utils;
-import protocol.ConsoleProtocol;
 import protocol.Error;
 import protocol.TFTP;
 
@@ -29,11 +28,6 @@ public class Client extends Utils implements Runnable {
     }
 
     public void init() throws Error {
-        // Démarre la gestion de la console côté client
-        // L'utilisateur peut utiliser celle-ci pour envoyer des messages à travers le réseau
-//        (new Thread(() -> {
-//            input();
-//        })).start();
         try {
             byte[] msg = TFTP.createReadPaquet(distantPath);
             envoyer(msg, SERV_IP, SERV_PORT);
@@ -51,21 +45,19 @@ public class Client extends Utils implements Runnable {
             getSocket().setSoTimeout(10000);
             while(hasMore) {
                 getSocket().receive(p);
-                // TODO Il faudrait ajouter une tempo
                 if(p.getPort() != SERV_PORT) {
                     SERV_PORT = p.getPort();
                 }
                 traiterReponse(p);
             }
         } catch (Exception e) {
-//            e.printStackTrace();
             if(e instanceof Error) {
                 return ((Error) e).getCode();
             } else {
-                return -1;
+                return -1; // Erreur inconnue côté client
             }
         }
-        return 0;
+        return 0; // Tout s'est bien passé
     }
 
     public void write(String file, byte[] data, int length) throws Error {
@@ -97,7 +89,7 @@ public class Client extends Utils implements Runnable {
                 buffer[i]=(byte)b;
             }
 
-            // FIXME Trouver une condition pour savoir qu'on peut fermer
+            // TODO Trouver une condition pour savoir qu'on peut fermer
             fileIn.close();
         } catch(IOException ex) {
             System.out.println(ex);
@@ -110,7 +102,8 @@ public class Client extends Utils implements Runnable {
         int length = p.getLength();
         TFTP response = TFTP.readBytes(data);
         byte[] tab;
-        switch (response.getOpcode()) {
+        switch (response.getOpcode()) { // Si le paquet envoyé par le serveur est un ...
+            // Seules les réponses à des paquets DATA et ERROR sont implémentées
             case READ:
                 break;
             case WRITE:
@@ -124,13 +117,13 @@ public class Client extends Utils implements Runnable {
                 hasMore = (length == 516);
                 lastBloc = response.getNumBloc();
                 if(lastBloc < 0) {
-                    throw new Error("Unknown transfer ID.", 5);
+                    throw new Error("Unknown transfer ID.", -5);
                 }
 
                 tab = TFTP.createAckPaquet(response.getNumBloc());
                 envoyer(tab, SERV_IP, SERV_PORT);
                 break;
-            case ACK:
+            case ACK: // Pas fini
                 if(lastBloc != response.getNumBloc()) {
                     System.out.println("Message reçu");
                     // Lire le fichier
@@ -146,7 +139,9 @@ public class Client extends Utils implements Runnable {
         }
     }
 
-    public static String input() {
+    /* ======================================= */
+
+    public static void input() {
         int res;
         while(true) {
             System.out.println("=========================================================");
@@ -166,11 +161,11 @@ public class Client extends Utils implements Runnable {
                 } else {
                     System.out.println("Commande non reconnue");
                 }
+            } else {
+                break;
             }
         }
     }
-
-    /* ======================================= */
 
     private static int STATIC_SERV_PORT = 69;
     private static String STATIC_SERV_IP = "127.0.0.1";
@@ -187,6 +182,8 @@ public class Client extends Utils implements Runnable {
     }
 
     public static void main(String[] args) {
+        // Exemple d'utilisation de la méthode ReceiveFile
+
 //        String ad = "134.214.117.162";
 //        int ret = receiveFile("image.jpg","img7.jpg", ad);
 //        System.out.println(ret);

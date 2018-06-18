@@ -1,10 +1,8 @@
 import core.Utils;
-import protocol.CommandEnum;
-import protocol.DialogProtocol;
+
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
 import java.net.InetAddress;
-import java.util.List;
 
 public class Serveur extends Utils implements Runnable {
 
@@ -22,21 +20,21 @@ public class Serveur extends Utils implements Runnable {
     }
 
     public boolean traitement(DatagramPacket p) {
-        DialogProtocol text = new DialogProtocol(p);
-//        System.out.println("=============================");
-//        System.out.println("Un client a envoyé un message");
-
-//        System.out.println(text);
-        if(text.isPing()) {
-            envoyer(DialogProtocol.pong(), ipClient, portClient);
-        } else {
-            envoyer(DialogProtocol.acknowledgeRequest(), ipClient, portClient);
-        }
-//        System.out.println("Message traité");
-
-        if(text.isAbortingConnection()) {
-            return false;
-        }
+//        DialogProtocol text = new DialogProtocol(p);
+////        System.out.println("=============================");
+////        System.out.println("Un client a envoyé un message");
+//
+////        System.out.println(text);
+//        if(text.isPing()) {
+//            envoyer(DialogProtocol.pong(), ipClient, portClient);
+//        } else {
+//            envoyer(DialogProtocol.acknowledgeRequest(), ipClient, portClient);
+//        }
+////        System.out.println("Message traité");
+//
+//        if(text.isAbortingConnection()) {
+//            return false;
+//        }
 
         return true;
     }
@@ -47,10 +45,10 @@ public class Serveur extends Utils implements Runnable {
 
     @Override
     public void init() {
-        DialogProtocol response = new DialogProtocol();
-        response.setCommand(CommandEnum.CHANGINGPORT);
-        response.setContent("");
-        envoyer(response.toString(), ipClient, portClient);
+//        DialogProtocol response = new DialogProtocol();
+//        response.setCommand(CommandEnum.CHANGINGPORT);
+//        response.setContent("");
+//        envoyer(response.toString(), ipClient, portClient);
     }
 
     @Override

@@ -1,7 +1,6 @@
 package protocol;
 
 import java.io.ByteArrayOutputStream;
-import java.io.UnsupportedEncodingException;
 import java.nio.ByteBuffer;
 import java.util.Arrays;
 
@@ -262,6 +261,8 @@ public class TFTP {
     }
 
     public static void main(String[] args) throws Exception {
+        // Tests
+        // C'est juste pour voir un peu comment java gère les conversions
         char c = 'a';
         byte b = (byte) c;
         short i = 4000;
